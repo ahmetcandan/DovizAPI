@@ -60,6 +60,18 @@ Currency currencyValue(ref string text, string code)
     int endIndex = text.IndexOf("</td>", startIndex);
     string bValue = text.Substring(startIndex, endIndex - startIndex).decimalConvert();
 
+    int index1 = text.Substring(0, startIndex).LastIndexOf("<a href=");
+    if (index1 == -1)
+        return null;
+    index1 = text.IndexOf("</span>", index1);
+    if (index1 == -1)
+        return null;
+    index1 += "</span>".Length;
+    int index2 = text.IndexOf("</a>", index1);
+    if (index2 == -1)
+        return null;
+    string title = text.Substring(index1, index2 - index1).Trim();
+
     searchKey = $@"<td class=""text-bold""  data-socket-key=""{code}"" data-socket-type=""C"" data-socket-attr=""s"" data-socket-animate=""true"" >";
     startIndex = text.IndexOf(searchKey, endIndex);
     if (startIndex == -1)
@@ -67,6 +79,22 @@ Currency currencyValue(ref string text, string code)
     startIndex += searchKey.Length;
     endIndex = text.IndexOf("</td>", startIndex);
     string sValue = text.Substring(startIndex, endIndex - startIndex).decimalConvert();
+
+    searchKey = @"<td>";
+    startIndex = text.IndexOf(searchKey, endIndex);
+    if (startIndex == -1)
+        return null;
+    startIndex += searchKey.Length;
+    endIndex = text.IndexOf("</td>", startIndex);
+    string maxValue = text.Substring(startIndex, endIndex - startIndex).Replace("%", "").decimalConvert();
+
+    searchKey = @"<td>";
+    startIndex = text.IndexOf(searchKey, endIndex);
+    if (startIndex == -1)
+        return null;
+    startIndex += searchKey.Length;
+    endIndex = text.IndexOf("</td>", startIndex);
+    string minValue = text.Substring(startIndex, endIndex - startIndex).Replace("%", "").decimalConvert();
 
     searchKey = @"data-socket-attr=""c"" >";
     startIndex = text.IndexOf(searchKey, endIndex);
@@ -86,9 +114,12 @@ Currency currencyValue(ref string text, string code)
 
     return new Currency(code)
     {
-        Buyy = decimal.Parse(bValue),
+        Buy = decimal.Parse(bValue),
         Sell = decimal.Parse(sValue),
+        Max = decimal.Parse(maxValue),
+        Min = decimal.Parse(minValue),
         Rate = decimal.Parse(cValue),
+        Title = title,
         Time = new TimeSpan(int.Parse(tValue[0]), int.Parse(tValue[1]), 0)
     };
 }
@@ -182,8 +213,11 @@ class Currency
         Code = code;
     }
     public string Code { get; set; }
-    public decimal? Buyy { get; set; }
+    public string Title { get; set; }
+    public decimal? Buy { get; set; }
     public decimal? Sell { get; set; }
+    public decimal? Max { get; set; }
+    public decimal? Min { get; set; }
     public decimal? Rate { get; set; }
     public TimeSpan? Time { get; set; }
 }
